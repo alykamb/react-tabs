@@ -18,7 +18,18 @@ const getColor = (index: number) => {
 const Page = styled.div<{ index: number }>`
   width: 100%;
   height: 400px;
-  background-color: ${({ index }: { index: number }) => getColor(index)}
+  background-color: ${({ index }: { index: number }) => getColor(index)};
+  position: relative;
+  &::after {
+    content: "${({ index }: { index: number }) => index}";
+    position: absolute;
+    color: white;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 6em;
+    font-weight: bold;
+  }
 `;
 
 const pages = Array.from({ length: 6 }).map((_, i) => i);
@@ -37,7 +48,6 @@ function App() {
           );
         })}
       </div>
-      <div>{count}</div>
       <Tabs selected={count} style={{ width: '300px' }}>
         {pages.map((i) => {
           return (
