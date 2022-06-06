@@ -6,23 +6,22 @@ import React, {
   useEffect,
   HTMLAttributes,
   useCallback,
+  FC,
+  ReactNode,
+  createContext,
 } from 'react';
 
 export const TabContent = styled.div`
     flex: 1;
     min-width: 100%;
     max-width: 100%;
-    background-color: white;
     z-index: 1;
 `;
 
-TabContent.defaultProps = {
-  isVisible: false,
-};
-
-export interface TabsProps extends HTMLAttributes<HTMLDivElement> {
+export interface TabsProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   selected?: number;
-  children?: ReactElement[];
+  children?: ReactNode;
 }
 
 export const TabsBase = styled.div<TabsProps>`
@@ -35,6 +34,7 @@ export const TabsBase = styled.div<TabsProps>`
 `;
 
 const TabsSlider = styled.div`
+  pointer-events: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -44,7 +44,48 @@ const TabsSlider = styled.div`
   transition: transform 5s ease-in-out;
 `;
 
-export const Tabs = ({ selected, children, ...props }: TabsProps) => {
+export const TabNavigation = styled.div`
+  display: flex;
+`;
+
+export interface TabNavigationContextProps {
+  setSelected: (value: number) => void;
+  selected: number;
+}
+
+const TabNavigationContext = createContext({} as TabNavigationContextProps);
+export interface TabNavigationProps {
+  children?: ReactNode;
+}
+
+type TabChildren = [ReactElement, ReactElement[]];
+
+const useParseTabsChildren = (children: ReactElement[]): TabChildren => {
+  const allChildren = React.Children.toArray(children);
+
+  const result = allChildren.reduce(
+    (acc: TabChildren, child) => {
+      const element = child as ReactElement;
+      if (!element.type) {
+        return acc;
+      }
+      if (element.type === TabNavigation) {
+        acc[0] = element;
+      } else {
+        acc[1].push(
+          <TabContent>{React.cloneElement(element, element.props)}</TabContent>
+        );
+      }
+      return acc;
+    },
+    [null as unknown as ReactElement, []]
+  );
+
+  return result;
+};
+
+export const Tabs = ({ children, ...props }: TabsProps) => {
+  const [selected, setSelected] = useState(0);
   const [tempSelected, setTempSelected] = useState(selected || 0);
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -89,13 +130,18 @@ export const Tabs = ({ selected, children, ...props }: TabsProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, slide]);
 
-  const selectedChild =
-    selected !== undefined &&
-    (React.Children.toArray(children)[selected] as ReactElement);
+  const [navigation, content] = useParseTabsChildren(
+    children as ReactElement[]
+  );
+
+  const selectedChild = selected !== undefined && content[selected];
 
   return (
     <TabsBase {...props}>
-      <TabsSlider ref={sliderRef}>{children}</TabsSlider>
+      <TabNavigationContext.Provider value={{ selected, setSelected }}>
+        {navigation}
+      </TabNavigationContext.Provider>
+      <TabsSlider ref={sliderRef}>{content}</TabsSlider>
       {selectedChild}
     </TabsBase>
   );

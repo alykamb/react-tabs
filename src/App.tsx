@@ -2,7 +2,7 @@ import { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import styled from 'styled-components';
-import { TabContent, Tabs } from './Tabs';
+import { TabContent, TabNavigation, Tabs } from './Tabs';
 
 const colors: any = {};
 
@@ -34,6 +34,7 @@ const Page = styled.div<{ index: number }>`
 
 const pages = Array.from({ length: 6 }).map((_, i) => i);
 
+const e = <div></div>;
 function App() {
   const [count, setCount] = useState(0);
 
@@ -49,13 +50,10 @@ function App() {
         })}
       </div>
       <Tabs selected={count} style={{ width: '300px' }}>
-        {pages.map((i) => {
-          return (
-            <TabContent key={i}>
-              <Page index={i} />
-            </TabContent>
-          );
-        })}
+        <TabNavigation></TabNavigation>
+        {pages.map((i) => (
+          <Page key={i} index={i} />
+        ))}
       </Tabs>
     </div>
   );
